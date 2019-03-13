@@ -1,15 +1,17 @@
 CC	= gcc
 CFLAGS	= -g
 
-all: main worker
+all: master palin
 
-main:	main.c
-	$(CC) -o main main.c
+master:	master.c
+	$(CC) -o master master.c
 
-worker:	worker.c
-	$(CC) -o worker worker.c
+palin:	palin.c
+	$(CC) -o palin palin.c
 
 .PHONY: clean
 clean:
-	/bin/rm -f *.o *~ main
-	/bin/rm -f *.o *~ worker
+	/bin/rm -f *.o *~ master
+	/bin/rm -f *.o *~ palin
+	/bin/rm -f *.out *~ palin
+	/bin/rm -f *.out *~ nopalin

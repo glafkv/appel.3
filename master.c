@@ -4,7 +4,25 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <semaphore.h>
+#include <sys/shm.h>
+#include <fcntl.h>
+#include <assert.h>
 
+#define shared_key 8675309
+
+
+int shmid;
+char *shmaddr;
+
+void reverse(char s[]){
+	int c,i,j;
+	for(i = 0, j=strlen(s)-1; i<j;i++,j--){
+		c = s[i];
+		s[i] = s[j];
+		s[j] = c;
+	}	
+}
 int main(int argc, char *argv[])
 {
 	
@@ -15,8 +33,8 @@ int main(int argc, char *argv[])
 	char *palinFile = "palin.out";
 	char *noPalinFile = "nopalin.out";
 	FILE *infptr = fopen(infile, "r");
-	FILE *outfptr1 = fopen(palinFile, "a");
-	FILE *outfptr2 = fopen(noPalinFile, "a");
+	FILE *outfptr1 = fopen(palinFile, "w");
+	FILE *outfptr2 = fopen(noPalinFile, "w");
 	
 
 	while((choice = getopt(argc,argv, "hf:")) != -1){
@@ -60,13 +78,32 @@ int main(int argc, char *argv[])
 		perror("main.c: Error: ");
 		exit(EXIT_FAILURE);
 	}
-	char str[80];
-	fgets(str,80,infptr);
-	printf("%s", str);
-
-
-
-
+	
+	char str1[80], str2[80];
+	int begin,middle,end, length = 0;
+	//Doesn't take number palindromes
+	 while(fgets(str1, sizeof(str1),infptr) != NULL){
+		//token=strtok(str1,s);
+		str1[strlen(str1)-1] = '\0';
+		while(str1[length]!='\0')
+			length++;
+		
+		end = length-1;
+		middle = length/2;
+		for(begin = 0; begin < middle; begin++){
+			if(str1[begin]!=str1[end]){
+				fprintf(outfptr2, "Not: %s\n", str1);
+				break;
+			}
+			end--;
+		}
+		if(begin==middle){
+			fprintf(outfptr1,"Palindrome: %s\n", str1);
+		}
+		
+	}
+	
+	
 
 	//close the files
 	fclose(infptr);
@@ -74,3 +111,5 @@ int main(int argc, char *argv[])
 	fclose(outfptr2);
 return 0;
 }//end of program
+
+
