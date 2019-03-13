@@ -10,19 +10,11 @@
 #include <assert.h>
 
 #define shared_key 8675309
-
+#define SEM_NAME "/makeSem"
 
 int shmid;
 char *shmaddr;
-
-void reverse(char s[]){
-	int c,i,j;
-	for(i = 0, j=strlen(s)-1; i<j;i++,j--){
-		c = s[i];
-		s[i] = s[j];
-		s[j] = c;
-	}	
-}
+sem_t *sem;
 int main(int argc, char *argv[])
 {
 	
@@ -103,8 +95,31 @@ int main(int argc, char *argv[])
 		
 	}
 	
+	//Create the semaphor
+	sem = sem_open(SEM_NAME, O_CREAT | O_EXCL, S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH, 0666, 1);
 	
-
+	if(sem == SEM_FAILED){
+		shmdt(shmaddr);
+		shmctl(shmid, IPC_RMID,NULL);
+		
+		sem_unlink(SEM_NAME);
+		sem_close(sem);
+		perror("Semaphore failure.");
+		
+		exit(EXIT_FAILURE);	
+	}
+	sprintf(parameter1, "%d", shmid);
+	
+	if(fork()==0){
+		execlp("./palin", "./palin", parameter1, (char *)NULL);
+		fprintf(stderr, "Failed to exec to palin.\n");
+	}
+	sem_post(sem);
+	
+	shmdt(shmaddr);
+	shmctl(shmid, IPC_RMID,NULL);
+	sem_close(sem);
+	sem_unlink(SEM_NAME);
 	//close the files
 	fclose(infptr);
 	fclose(outfptr1);
