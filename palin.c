@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/sem.h>
+#include <semaphore.h>
 #include <fcntl.h>
 #include <sys/shm.h>
 #include <unistd.h>
@@ -8,10 +9,11 @@
 #include <string.h>
 
 #define shared_key 8675309
+#define SEM_NAME "/makeSem"
 
 int shmid;
 char *shmaddr;
-
+sem_t *sem;
 int main(int argc, char *argv[])
 {
 
@@ -24,7 +26,15 @@ int main(int argc, char *argv[])
 
 	shmid = atoi(argv[1]);
 	shmaddr = (char *) shmat (shmid, 0,0);
+	sem = sem_open(SEM_NAME,O_CREAT,0666,1);
 	
+	if(sem == SEM_FAILED){
+		perror("Semaphore failed.");
+		exit(EXIT_FAILURE);
+	}
+	sem_wait(sem);	
+	printf("palin.c is using the semaphore\n");
+
 	//Get the info from the shared memory
 	ptr = shmaddr + sizeof (shared_memory);
 	p = (int *) shmaddr;
@@ -43,9 +53,8 @@ int main(int argc, char *argv[])
 	
 	printf("%i,   %i,     %i\n", first, second, third);
 
+	sem_post(sem);
 
-	shmdt(shmaddr);
-	shmctl(shmid, IPC_RMID,NULL);
 
 
 

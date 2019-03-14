@@ -1,4 +1,4 @@
-CC	= gcc
+CC	= gcc -pthread -lrt
 CFLAGS	= -g
 
 all: master palin

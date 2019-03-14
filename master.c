@@ -8,6 +8,8 @@
 #include <sys/shm.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <sys/sem.h>
+#include <sys/stat.h>
 
 #define shared_key 8675309
 #define SEM_NAME "/makeSem"
@@ -15,6 +17,7 @@
 int shmid;
 char *shmaddr;
 sem_t *sem;
+
 int main(int argc, char *argv[])
 {
 	
@@ -71,7 +74,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 	
-	char str1[80], str2[80];
+	/*char str1[80], str2[80];
 	int begin,middle,end, length = 0;
 	//Doesn't take number palindromes
 	 while(fgets(str1, sizeof(str1),infptr) != NULL){
@@ -93,9 +96,30 @@ int main(int argc, char *argv[])
 			fprintf(outfptr1,"Palindrome: %s\n", str1);
 		}
 		
-	}
+	}*/
 	
 	//Create the semaphor
+	char parameter1 [12];
+	char *ptr;
+	int array[3];
+
+	if((shmid = shmget(shared_key,1024,IPC_CREAT | IPC_EXCL | 0666)) < 0)
+	{
+		perror("shmget: ");
+		exit(1);
+	}
+	
+	shmaddr = (char *) shmat (shmid, 0,0);
+	ptr = shmaddr + sizeof (array);
+	
+	array[0] = sprintf(ptr, "0") +1;
+	ptr += array[0];
+	array[1] = sprintf(ptr, "74") +1;
+	ptr += array[1];
+	array[2] = sprintf(ptr, "932") +1;
+
+	memcpy(shmaddr, &array, sizeof (array));
+
 	sem = sem_open(SEM_NAME, O_CREAT | O_EXCL, S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH, 0666, 1);
 	
 	if(sem == SEM_FAILED){
@@ -114,6 +138,9 @@ int main(int argc, char *argv[])
 		execlp("./palin", "./palin", parameter1, (char *)NULL);
 		fprintf(stderr, "Failed to exec to palin.\n");
 	}
+	sleep(1);
+	sem_wait(sem);
+	printf("master.c is using the semaphore");
 	sem_post(sem);
 	
 	shmdt(shmaddr);
